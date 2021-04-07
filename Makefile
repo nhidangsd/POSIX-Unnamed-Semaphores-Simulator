@@ -8,7 +8,7 @@ all: mizzo
 # 	$(CC) main.o mizzo.o -o mizzo
 
 mizzo: main.o mizzo.o io.o testMizzo.o
-	$(CC) main.o mizzo.o io.o testMizzo.o -o mizzo
+	$(CC) main.o mizzo.o io.o testMizzo.o -o mizzo -lpthread -lrt
 
 testMizzo.o: testMizzo.c
 	$(CC) $(CFLAGS) testMizzo.c

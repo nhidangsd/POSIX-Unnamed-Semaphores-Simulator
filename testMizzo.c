@@ -3,8 +3,7 @@
 
 #include "testMizzo.h"
 
-void testProcessArgs(OPTION_ARGS flags)
-{
+void testProcessArgs(OPTION_ARGS flags){
     assert(flags.E == 35);
     assert(flags.f == 5);
     assert(flags.e == 15);

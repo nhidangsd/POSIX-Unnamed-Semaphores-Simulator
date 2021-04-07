@@ -1,10 +1,11 @@
 #include <stdlib.h>     /* atoi */
 #include <stdio.h>      /* printf */
 #include <unistd.h>     /* getopt */
+#include <semaphore.h>	/* POSIX semaphores prototypes & defns */
+#include <pthread.h>	/* POSIX threads prototypes & defns */
 #include "mizzo.h"
 
-void processArgs(int argc, char* argv[], OPTION_ARGS* flags)
-{
+void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
     int Option;
     // only take -E, -L, -f, -e as option args
     // ':' expects a value after that option arg
@@ -52,7 +53,11 @@ void processArgs(int argc, char* argv[], OPTION_ARGS* flags)
 }
 
 
-void runSimulation(OPTION_ARGS flags)
-{
+void runSimulation(OPTION_ARGS flags){
     int count = 0;  // num of candies produced
+
+    while (count < 100){
+        /* code */
+    }
+    
 }
