@@ -2,6 +2,20 @@
 #define THREAD_UTILS_H
 #include "mizzo.h"
 
-void initThreadData(THREAD_DATA* threadData, OPERATION operation, char* name, char* message, int n, sem_t* mutex, int* val);
+void initSemData(SEM_DATA* semData);
+void initSem(sem_t* sem, int initalVal);
+void initThreadData(THREAD_DATA* threadData, OPERATION operation, char* name, int n, 
+                    SEM_DATA* semData, int* val);
+
+
 void* operate(void* VoidPtr);
+
+// Function to produce an item and
+// add it to the buffer
+void produce(void* VoidPtr);
+
+// Function to consume an item and
+// remove it from buffer
+void consume(void* VoidPtr);
+
 #endif // TTHREAD_UTILS_H

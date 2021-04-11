@@ -35,13 +35,18 @@ typedef enum{
 } OPERATION;
 
 typedef struct{
+    sem_t MutexPtr;     /* pointer to Critical section */
+    sem_t EmptyPtr;     /* pointer to Critical section */
+    sem_t FullPtr;     /* pointer to Critical section */
+} SEM_DATA;
+typedef struct{
     OPERATION Operation; /* Specify what should be done */
     char* Name;          /* Name of this thread */
-    char* Message;       /* Message to display the current state */
     int N;               /* Number of times to perform action */
-    sem_t* MutexPtr;     /* pointer to Critical section */
+    SEM_DATA* SemPtr;
     int *ValuePtr;        /* pointer to shared data */
 } THREAD_DATA;
+
 
 /* 
  * processArgs - Scans input arguments and setup the flags for later usage 

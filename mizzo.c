@@ -4,6 +4,7 @@
 #include <pthread.h>	/* POSIX threads prototypes & defns */
 #include "mizzo.h"
 #include "threadUtils.h"
+#include "testMizzo.h"
 
 void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
     int Option;
@@ -58,26 +59,20 @@ void runSimulation(OPTION_ARGS flags){
 
     pthread_t   Ethel, Lucy, Cfb, Ees;                  /* thread declarations */
     THREAD_DATA EthelData, LucyData, CfbData, EesData;  /* thread data */
-    sem_t       Mutex;                                  /* critical region semaphore */
+    SEM_DATA    SemData;                                /* critical region semaphore */
     void		*ThreadResultPtr;
     int Val = 0;
 
+    initSemData(&SemData);
+    // testInitSemData(SemData);
+
     /* Initialize data structures -------------------- */
-    initThreadData(&EthelData, INCREMENT, "Ethel", "Ethel consumed.", flags.E, &Mutex, &Val);
-    initThreadData(&LucyData, DECREMENT, "Lucy", "Lucy consumed.", flags.L, &Mutex, &Val);
-    initThreadData(&CfbData, INCREMENT, "Cfb", "Added crunchy frog bite.", flags.f, &Mutex, &Val);
-    initThreadData(&EesData, DECREMENT, "Ees", "Added everlasting escargot sucker.", flags.e, &Mutex, &Val);
-
-   /* Create the semaphore --------------------
-    * arg 1 - semaphore handle
-    * arg 2 - Always zero for unnamed semphores
-    * arg 3 - Initial value
-    */
-    if (sem_init(&Mutex, 0, 1) == -1) {
-        fprintf(stderr, "Unable to initialize Mutex semaphore\n");
-        exit(EXT_SEMAPHORE);
-    }
-
+    initThreadData(&EthelData, INCREMENT, "Ethel", flags.E, &SemData, &Val);
+    initThreadData(&LucyData, DECREMENT, "Lucy", flags.L, &SemData, &Val);
+    initThreadData(&CfbData, INCREMENT, "Cfb", flags.f, &SemData, &Val);
+    initThreadData(&EesData, DECREMENT, "Ees", flags.e, &SemData, &Val);
+    
+    // testInitThreadData(EthelData);
    /*
     *   Create children threads
     */
@@ -100,12 +95,12 @@ void runSimulation(OPTION_ARGS flags){
         exit(EXT_THREAD);
     }
 
-   /* wait for threads to exit --------------------
-    * Note that these threads always return a NULL result pointer
-    * so we will not be checking the ThreadResultPtr, but they
-    * could return something using the same mechanisms that we used 
-    * to pass data in to the thread.
-    */
+//    /* wait for threads to exit --------------------
+//     * Note that these threads always return a NULL result pointer
+//     * so we will not be checking the ThreadResultPtr, but they
+//     * could return something using the same mechanisms that we used 
+//     * to pass data in to the thread.
+//     */
 
     if (pthread_join(Ethel, &ThreadResultPtr)) {
         fprintf(stderr, "Thread join error\n");
