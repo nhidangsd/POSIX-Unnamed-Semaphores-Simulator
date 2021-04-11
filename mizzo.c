@@ -1,9 +1,9 @@
 #include <stdlib.h>     /* atoi */
 #include <stdio.h>      /* printf */
 #include <unistd.h>     /* getopt */
-#include <semaphore.h>	/* POSIX semaphores prototypes & defns */
 #include <pthread.h>	/* POSIX threads prototypes & defns */
 #include "mizzo.h"
+#include "threadUtils.h"
 
 void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
     int Option;
@@ -56,8 +56,76 @@ void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
 void runSimulation(OPTION_ARGS flags){
     int count = 0;  // num of candies produced
 
-    while (count < 100){
-        /* code */
+    pthread_t   Ethel, Lucy, Cfb, Ees;                  /* thread declarations */
+    THREAD_DATA EthelData, LucyData, CfbData, EesData;  /* thread data */
+    sem_t       Mutex;                                  /* critical region semaphore */
+    void		*ThreadResultPtr;
+    int Val = 0;
+
+    /* Initialize data structures -------------------- */
+    initThreadData(&EthelData, INCREMENT, "Ethel", "Ethel consumed.", flags.E, &Mutex, &Val);
+    initThreadData(&LucyData, DECREMENT, "Lucy", "Lucy consumed.", flags.L, &Mutex, &Val);
+    initThreadData(&CfbData, INCREMENT, "Cfb", "Added crunchy frog bite.", flags.f, &Mutex, &Val);
+    initThreadData(&EesData, DECREMENT, "Ees", "Added everlasting escargot sucker.", flags.e, &Mutex, &Val);
+
+   /* Create the semaphore --------------------
+    * arg 1 - semaphore handle
+    * arg 2 - Always zero for unnamed semphores
+    * arg 3 - Initial value
+    */
+    if (sem_init(&Mutex, 0, 1) == -1) {
+        fprintf(stderr, "Unable to initialize Mutex semaphore\n");
+        exit(EXT_SEMAPHORE);
     }
+
+   /*
+    *   Create children threads
+    */
+    if (pthread_create(&Ethel, NULL, operate, &EthelData)) {
+        fprintf(stderr, "Unable to create Ethel thread\n");
+        exit(EXT_THREAD);
+    }
+
+    if (pthread_create(&Lucy, NULL, operate, &LucyData)) {
+        fprintf(stderr, "Unable to create Lucy thread\n");
+        exit(EXT_THREAD);
+    }
+    if (pthread_create(&Cfb, NULL, operate, &CfbData)) {
+        fprintf(stderr, "Unable to create Cfb thread\n");
+        exit(EXT_THREAD);
+    }
+
+    if (pthread_create(&Ees, NULL, operate, &EesData)) {
+        fprintf(stderr, "Unable to create Ees thread\n");
+        exit(EXT_THREAD);
+    }
+
+   /* wait for threads to exit --------------------
+    * Note that these threads always return a NULL result pointer
+    * so we will not be checking the ThreadResultPtr, but they
+    * could return something using the same mechanisms that we used 
+    * to pass data in to the thread.
+    */
+
+    if (pthread_join(Ethel, &ThreadResultPtr)) {
+        fprintf(stderr, "Thread join error\n");
+        exit(EXT_THREAD);
+    }
+  
+    if (pthread_join(Lucy, &ThreadResultPtr))  {
+        fprintf(stderr, "Thread join error\n");
+        exit(EXT_THREAD);
+    }
+    
+    if (pthread_join(Cfb, &ThreadResultPtr)) {
+        fprintf(stderr, "Thread join error\n");
+        exit(EXT_THREAD);
+    }
+  
+    if (pthread_join(Ees, &ThreadResultPtr))  {
+        fprintf(stderr, "Thread join error\n");
+        exit(EXT_THREAD);
+    }
+    printf("Back to Main thread\n");
     
 }

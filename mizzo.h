@@ -1,5 +1,13 @@
 #ifndef MIZZO_H
 #define MIZZO_H
+#include <semaphore.h>	/* POSIX semaphores prototypes & defns */
+
+/* program exit codes */
+#define EXT_NORMAL	 0
+#define EXT_USAGE	 5
+#define EXT_SEMAPHORE	10
+#define EXT_THREAD	15
+
 
 /*
 * Success and error codes.
@@ -31,8 +39,8 @@ typedef struct{
     char* Name;          /* Name of this thread */
     char* Message;       /* Message to display the current state */
     int N;               /* Number of times to perform action */
-    sem_t *MutexPtr;     /* pointer to Critical section */
-    int *ValuePtr        /* pointer to shared data */
+    sem_t* MutexPtr;     /* pointer to Critical section */
+    int *ValuePtr;        /* pointer to shared data */
 } THREAD_DATA;
 
 /* 
