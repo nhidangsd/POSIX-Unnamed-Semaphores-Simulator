@@ -104,7 +104,7 @@ void io_add_type(ProductType producer, int OnBelt[], int Produced[]) {
     total += Produced[idx];  /* track total produced */
     if (idx > 0)
       printf(" + ");  /* separator */
-    printf("%d %s", Produced[idx], ProducerAbbrevs[idx], Produced[idx]);
+    printf("%d %s", Produced[idx], ProducerAbbrevs[idx]);
   }
   /* total produced over how long */
   printf(" = %d in %.3f s.\n", total, elapsed_s());

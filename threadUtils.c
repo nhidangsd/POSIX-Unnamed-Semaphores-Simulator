@@ -29,6 +29,7 @@ void initThreadData(THREAD_DATA* threadData, OPERATION operation,
     threadData->Operation = operation;
     threadData->Name = name;
     threadData->N = n;
+    threadData->Counter = 0;
     threadData->SemPtr = semData;
     threadData->BufferPtr = buffer;
 };
@@ -36,35 +37,89 @@ void initThreadData(THREAD_DATA* threadData, OPERATION operation,
 
 void* operate(void* VoidPtr){
     /* Typecast into a pointer of the expected type. */
-    THREAD_DATA	*DataPtr = (THREAD_DATA *) VoidPtr;
+    THREAD_DATA	*ThreadData = (THREAD_DATA *) VoidPtr;
+    SEM_DATA* SemData = ThreadData->SemPtr;
+    BUFFER_DATA* BufferData = ThreadData->BufferPtr;
+
+    while(!(productionDone(BufferData) && consumptionDone(BufferData)))
+    {
+
+      /* Enter Critical Section */
+      sem_wait(&(SemData->MutexPtr));
+
+      /* Update the share data after being modified by the this thread */
+      switch(ThreadData->Operation){
+
+        case PRODUCE:
+          if(!productionDone(BufferData)){
+            sem_wait(&(SemData->EmptyPtr));
+            produce(ThreadData);
+            sem_post(&(SemData->FullPtr));
+          }
+          break;
+
+        case CONSUME:
+          if(!consumptionDone(BufferData)){
+            sem_wait(&(SemData->FullPtr));          
+            consume(ThreadData);
+            sem_post(&(SemData->EmptyPtr));
+          }
+          break;
+
+        default:
+          /* Bad input, return without any operations */
+          return NULL;
+      }
+      
+      /* Clear output stream */
+      fflush(stdout);
+
+      /* Exit Critical Section */
+      sem_post(&(SemData->MutexPtr));
     
-    /* Enter Critical Section */
-    sem_wait(&(DataPtr->SemPtr->MutexPtr));
-
-   /* Put this thread to sleep for N milliseconds 
-    * to simulate the amount of time to consume a product (put a candy in the box)
-    */
-    sleep(DataPtr->N);
-
-    /* Update the share data after being modified by the this thread */
-
-    /* Clear output stream */
-    fflush(stdout);
-
-    /* Exit Critical Section */
-    sem_post(&(DataPtr->SemPtr->MutexPtr));
-    return NULL;
+    }
+  return NULL;
+    
 };
 
-void produce(void* VoidPtr){
-  SEM_DATA* SemPtr = (SEM_DATA *) VoidPtr;
-  sem_wait(&(SemPtr->MutexPtr));
+void produce(THREAD_DATA * ThreadPtr){
+  BUFFER_DATA* BufferData = ThreadPtr->BufferPtr;
 
-  sem_wait(&(SemPtr->EmptyPtr));
-  sem_post(&(SemPtr->FullPtr));
-  sem_post(&(SemPtr->MutexPtr));
+  /* Put this thread to sleep for N milliseconds 
+  * to simulate the amount of time to consume a product (put a candy in the box)
+  */
+  sleep(ThreadPtr->N);
+
+  /* Update the Num of times this thread has performed action */
+  ThreadPtr->Counter++;
+
+  /* Update ProducerCount*/
+  BufferData->ProducerCount++;
 };
 
-void consume(void* VoidPtr){
-  SEM_DATA* SemPtr = (SEM_DATA *) VoidPtr;
+void consume(THREAD_DATA * ThreadPtr){
+  BUFFER_DATA* BufferData = ThreadPtr->BufferPtr;
+
+  /* Put this thread to sleep for N milliseconds 
+  * to simulate the amount of time to consume a product (put a candy in the box)
+  */
+  sleep(ThreadPtr->N);
+
+  /* Update the Num of times this thread has performed action */
+  ThreadPtr->Counter++;
+
+  /* Update the Consumer Count */
+  BufferData->ConsumerCount++;
 };
+
+
+int productionDone(BUFFER_DATA* bufferPtr){
+  return (bufferPtr->ProducerCount < 100) ? 0 : 1;
+}
+
+int consumptionDone(BUFFER_DATA* bufferPtr){
+  return (bufferPtr->ConsumerCount < 100) ? 0 : 1;
+}
+
+
+

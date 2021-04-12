@@ -41,16 +41,18 @@ typedef struct{
 } SEM_DATA;
 
 typedef struct{
-    int Count;
+    int ConsumerCount;
+    int ProducerCount;
     int OnBelt[ProductTypeN];
     int Consumed[ConsumerTypeN];
 } BUFFER_DATA;
 typedef struct{
     OPERATION Operation; /* Specify what should be done */
     char* Name;          /* Name of this thread */
-    int N;               /* Number of times to perform action */
+    int N;               /* Number of milliseconds N needed to perform task  */
+    int Counter;         /* Number of times to perform action */
     SEM_DATA* SemPtr;
-    BUFFER_DATA* BufferPtr;        /* pointer to shared data */
+    BUFFER_DATA* BufferPtr;/* pointer to shared data */
 } THREAD_DATA;
 
 

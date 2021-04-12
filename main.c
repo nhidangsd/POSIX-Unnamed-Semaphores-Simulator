@@ -14,7 +14,5 @@ int main(int argc, char* argv[]){
     processArgs(argc, argv, &flags);
     runSimulation(flags);
 
-    testProcessArgs(flags);
-
     return 0;
 }

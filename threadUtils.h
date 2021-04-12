@@ -12,10 +12,14 @@ void* operate(void* VoidPtr);
 
 // Function to produce an item and
 // add it to the buffer
-void produce(void* VoidPtr);
+void produce(THREAD_DATA * ThreadPtr);
 
 // Function to consume an item and
 // remove it from buffer
-void consume(void* VoidPtr);
+void consume(THREAD_DATA * ThreadPtr);
+
+int productionDone(BUFFER_DATA* bufferPtr);
+
+int consumptionDone(BUFFER_DATA* bufferPtr);
 
 #endif // TTHREAD_UTILS_H

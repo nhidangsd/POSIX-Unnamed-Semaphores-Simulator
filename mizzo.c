@@ -55,12 +55,14 @@ void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
 
 
 void runSimulation(OPTION_ARGS flags){
+    testProcessArgs(flags);
 
     pthread_t   Ethel, Lucy, Cfb, Ees;                  /* thread declarations */
     THREAD_DATA EthelData, LucyData, CfbData, EesData;  /* thread data */
     SEM_DATA    SemData;                                /* critical region semaphore */
     void		*ThreadResultPtr;
-    BUFFER_DATA BufferData = {0, {0, 0},{0, 0}};
+    BUFFER_DATA BufferData = {0, 0, {0, 0},{0, 0}};
+    // testInitBufferData(&BufferData);
 
     initSemData(&SemData);
     // testInitSemData(SemData);
@@ -72,6 +74,7 @@ void runSimulation(OPTION_ARGS flags){
     initThreadData(&EesData, PRODUCE, "Ees", flags.e, &SemData, &BufferData);
     
     // testInitThreadData(EthelData);
+
    /*
     *   Create children threads
     */
@@ -94,12 +97,12 @@ void runSimulation(OPTION_ARGS flags){
         exit(EXT_THREAD);
     }
 
-//    /* wait for threads to exit --------------------
-//     * Note that these threads always return a NULL result pointer
-//     * so we will not be checking the ThreadResultPtr, but they
-//     * could return something using the same mechanisms that we used 
-//     * to pass data in to the thread.
-//     */
+   /* wait for threads to exit --------------------
+    * Note that these threads always return a NULL result pointer
+    * so we will not be checking the ThreadResultPtr, but they
+    * could return something using the same mechanisms that we used 
+    * to pass data in to the thread.
+    */
 
     if (pthread_join(Ethel, &ThreadResultPtr)) {
         fprintf(stderr, "Thread join error\n");
