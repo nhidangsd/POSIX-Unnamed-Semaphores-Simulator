@@ -55,22 +55,21 @@ void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
 
 
 void runSimulation(OPTION_ARGS flags){
-    int count = 0;  // num of candies produced
 
     pthread_t   Ethel, Lucy, Cfb, Ees;                  /* thread declarations */
     THREAD_DATA EthelData, LucyData, CfbData, EesData;  /* thread data */
     SEM_DATA    SemData;                                /* critical region semaphore */
     void		*ThreadResultPtr;
-    int Val = 0;
+    BUFFER_DATA BufferData = {0, {0, 0},{0, 0}};
 
     initSemData(&SemData);
     // testInitSemData(SemData);
 
     /* Initialize data structures -------------------- */
-    initThreadData(&EthelData, INCREMENT, "Ethel", flags.E, &SemData, &Val);
-    initThreadData(&LucyData, DECREMENT, "Lucy", flags.L, &SemData, &Val);
-    initThreadData(&CfbData, INCREMENT, "Cfb", flags.f, &SemData, &Val);
-    initThreadData(&EesData, DECREMENT, "Ees", flags.e, &SemData, &Val);
+    initThreadData(&EthelData, CONSUME, "Ethel", flags.E, &SemData, &BufferData);
+    initThreadData(&LucyData, CONSUME, "Lucy", flags.L, &SemData, &BufferData);
+    initThreadData(&CfbData, PRODUCE, "Cfb", flags.f, &SemData, &BufferData);
+    initThreadData(&EesData, PRODUCE, "Ees", flags.e, &SemData, &BufferData);
     
     // testInitThreadData(EthelData);
    /*

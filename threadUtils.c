@@ -9,10 +9,6 @@ void initSemData(SEM_DATA* semData){
   initSem(&(semData->MutexPtr), 1);
   initSem(&(semData->EmptyPtr), 10);
   initSem(&(semData->FullPtr), 0);
-  // if (sem_init(&(semData->MutexPtr), 0, 1) == -1) {
-  //   fprintf(stderr, "Unable to initialize semaphore\n");
-  //   exit(EXT_SEMAPHORE);
-  // }
 };
 
 void initSem(sem_t* sem, int initalVal){
@@ -29,19 +25,19 @@ void initSem(sem_t* sem, int initalVal){
 };
 
 void initThreadData(THREAD_DATA* threadData, OPERATION operation, 
-                    char* name, int n, SEM_DATA* semData, int* val){
+                    char* name, int n, SEM_DATA* semData, BUFFER_DATA* buffer){
     threadData->Operation = operation;
     threadData->Name = name;
     threadData->N = n;
     threadData->SemPtr = semData;
-    threadData->ValuePtr = val;
+    threadData->BufferPtr = buffer;
 };
 
 
 void* operate(void* VoidPtr){
     /* Typecast into a pointer of the expected type. */
     THREAD_DATA	*DataPtr = (THREAD_DATA *) VoidPtr;
-
+    
     /* Enter Critical Section */
     sem_wait(&(DataPtr->SemPtr->MutexPtr));
 
@@ -61,9 +57,14 @@ void* operate(void* VoidPtr){
 };
 
 void produce(void* VoidPtr){
+  SEM_DATA* SemPtr = (SEM_DATA *) VoidPtr;
+  sem_wait(&(SemPtr->MutexPtr));
 
+  sem_wait(&(SemPtr->EmptyPtr));
+  sem_post(&(SemPtr->FullPtr));
+  sem_post(&(SemPtr->MutexPtr));
 };
 
 void consume(void* VoidPtr){
-
+  SEM_DATA* SemPtr = (SEM_DATA *) VoidPtr;
 };

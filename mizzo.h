@@ -1,7 +1,7 @@
 #ifndef MIZZO_H
 #define MIZZO_H
 #include <semaphore.h>	/* POSIX semaphores prototypes & defns */
-
+#include "production.h"
 /* program exit codes */
 #define EXT_NORMAL	 0
 #define EXT_USAGE	 5
@@ -30,8 +30,8 @@ typedef struct{
 
 /* Type of operations threads can perform */
 typedef enum{
-    INCREMENT,
-    DECREMENT,
+    PRODUCE,
+    CONSUME,
 } OPERATION;
 
 typedef struct{
@@ -39,12 +39,18 @@ typedef struct{
     sem_t EmptyPtr;     /* pointer to Critical section */
     sem_t FullPtr;     /* pointer to Critical section */
 } SEM_DATA;
+
+typedef struct{
+    int Count;
+    int OnBelt[ProductTypeN];
+    int Consumed[ConsumerTypeN];
+} BUFFER_DATA;
 typedef struct{
     OPERATION Operation; /* Specify what should be done */
     char* Name;          /* Name of this thread */
     int N;               /* Number of times to perform action */
     SEM_DATA* SemPtr;
-    int *ValuePtr;        /* pointer to shared data */
+    BUFFER_DATA* BufferPtr;        /* pointer to shared data */
 } THREAD_DATA;
 
 

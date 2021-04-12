@@ -24,10 +24,10 @@ void testInitSemData(SEM_DATA semData){
 };
 
 void testInitThreadData(THREAD_DATA data){
-    assert(data.Operation == INCREMENT);
+    assert(data.Operation == CONSUME);
     assert(strcmp(data.Name, "Ethel") == 0);
     assert(data.N == 35);
     assert(data.SemPtr != NULL);
-    assert(*(data.ValuePtr) == 0);
+    assert(data.BufferPtr != NULL);
     printf("PASSED TEST::testInitThreadData\n\n");
 }
