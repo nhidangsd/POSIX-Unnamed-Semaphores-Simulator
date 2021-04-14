@@ -57,45 +57,49 @@ void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
 void runSimulation(OPTION_ARGS flags){
     testProcessArgs(flags);
 
-    pthread_t   Ethel, Lucy, Cfb, Ees;                  /* thread declarations */
-    THREAD_DATA EthelData, LucyData, CfbData, EesData;  /* thread data */
+    pthread_t   Lucy, Ethel, Cfb, Ees;                  /* thread declarations */
+    THREAD_DATA LucyData, EthelData, CfbData, EesData;  /* thread data */
     SEM_DATA    SemData;                                /* critical region semaphore */
     void		*ThreadResultPtr;
-    BUFFER_DATA BufferData = {0, 0, {0, 0},{0, 0}};
-    // testInitBufferData(&BufferData);
+    BUFFER_DATA BufferData = {0, 0, {0}, NULL, NULL, {0},{0}};
+    testInitBufferData(&BufferData);
 
     initSemData(&SemData);
-    // testInitSemData(SemData);
+    testInitSemData(SemData);
 
     /* Initialize data structures -------------------- */
-    initThreadData(&EthelData, CONSUME, "Ethel", flags.E, &SemData, &BufferData);
-    initThreadData(&LucyData, CONSUME, "Lucy", flags.L, &SemData, &BufferData);
-    initThreadData(&CfbData, PRODUCE, "Cfb", flags.f, &SemData, &BufferData);
-    initThreadData(&EesData, PRODUCE, "Ees", flags.e, &SemData, &BufferData);
     
-    // testInitThreadData(EthelData);
+    initThreadData(&CfbData, PRODUCE, "Cfb", flags.f, &SemData, &BufferData);
+    // initThreadData(&EesData, PRODUCE, "Ees", flags.e, &SemData, &BufferData);
+
+    initThreadData(&LucyData, CONSUME, "Lucy", flags.L, &SemData, &BufferData);
+    // initThreadData(&EthelData, CONSUME, "Ethel", flags.E, &SemData, &BufferData);
+
+    
+    testInitThreadData(LucyData);
 
    /*
     *   Create children threads
     */
-    if (pthread_create(&Ethel, NULL, operate, &EthelData)) {
-        fprintf(stderr, "Unable to create Ethel thread\n");
-        exit(EXT_THREAD);
-    }
-
-    if (pthread_create(&Lucy, NULL, operate, &LucyData)) {
-        fprintf(stderr, "Unable to create Lucy thread\n");
-        exit(EXT_THREAD);
-    }
-    if (pthread_create(&Cfb, NULL, operate, &CfbData)) {
+    if (pthread_create(&Cfb, NULL, produce, &CfbData)) {
         fprintf(stderr, "Unable to create Cfb thread\n");
         exit(EXT_THREAD);
     }
 
-    if (pthread_create(&Ees, NULL, operate, &EesData)) {
-        fprintf(stderr, "Unable to create Ees thread\n");
+    // if (pthread_create(&Ees, NULL, operate, &EesData)) {
+    //     fprintf(stderr, "Unable to create Ees thread\n");
+    //     exit(EXT_THREAD);
+    // }
+
+    if (pthread_create(&Lucy, NULL, consume, &LucyData)) {
+        fprintf(stderr, "Unable to create Lucy thread\n");
         exit(EXT_THREAD);
     }
+
+    // if (pthread_create(&Ethel, NULL, operate, &EthelData)) {
+    //     fprintf(stderr, "Unable to create Ethel thread\n");
+    //     exit(EXT_THREAD);
+    // }
 
    /* wait for threads to exit --------------------
     * Note that these threads always return a NULL result pointer
@@ -103,26 +107,29 @@ void runSimulation(OPTION_ARGS flags){
     * could return something using the same mechanisms that we used 
     * to pass data in to the thread.
     */
-
-    if (pthread_join(Ethel, &ThreadResultPtr)) {
-        fprintf(stderr, "Thread join error\n");
-        exit(EXT_THREAD);
-    }
-  
-    if (pthread_join(Lucy, &ThreadResultPtr))  {
-        fprintf(stderr, "Thread join error\n");
-        exit(EXT_THREAD);
-    }
-    
     if (pthread_join(Cfb, &ThreadResultPtr)) {
         fprintf(stderr, "Thread join error\n");
         exit(EXT_THREAD);
     }
   
-    if (pthread_join(Ees, &ThreadResultPtr))  {
+    // if (pthread_join(Ees, &ThreadResultPtr))  {
+    //     fprintf(stderr, "Thread join error\n");
+    //     exit(EXT_THREAD);
+    // }
+
+
+    if (pthread_join(Lucy, &ThreadResultPtr))  {
         fprintf(stderr, "Thread join error\n");
         exit(EXT_THREAD);
     }
-    printf("Back to Main thread\n");
+
+
+    // if (pthread_join(Ethel, &ThreadResultPtr)) {
+    //     fprintf(stderr, "Thread join error\n");
+    //     exit(EXT_THREAD);
+    // }
+
+
+    printf("=======Back to Main thread\n");
     
 }

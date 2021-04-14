@@ -16,6 +16,12 @@ void testInitBufferData(BUFFER_DATA* bufferPtr){
     assert(bufferPtr->ConsumerCount == 0);
     assert(bufferPtr->ProducerCount == 0);
     int i;
+    for(i=0; i<CONVEYER_BELT_MAX; i++){
+        assert(bufferPtr->ConveyerBelt[i] == 0);
+    }
+
+    assert(bufferPtr->In == NULL);
+    assert(bufferPtr->Out == NULL);
     for(i=0; i<ProductTypeN; i++){
         assert(bufferPtr->OnBelt[i] == 0);
     }
@@ -38,10 +44,34 @@ void testInitSemData(SEM_DATA semData){
 
 void testInitThreadData(THREAD_DATA data){
     assert(data.Operation == CONSUME);
-    assert(strcmp(data.Name, "Ethel") == 0);
-    assert(data.N == 35);
+    assert(strcmp(data.Name, "Lucy") == 0);
+    assert(data.N == 20);
     assert(data.Counter == 0);
     assert(data.SemPtr != NULL);
     assert(data.BufferPtr != NULL);
-    printf("PASSED TEST 4::testInitThreadData\n\n");
+    printf("PASSED TEST 4 ::testInitThreadData\n\n");
+}
+
+void testProductionDone(THREAD_DATA * ThreadPtr, int actualResult){
+    assert(ThreadPtr->BufferPtr != NULL);
+    assert(ThreadPtr->BufferPtr->ProducerCount >=0);
+
+    if(ThreadPtr->BufferPtr->ProducerCount < MAX_NUM_OF_PRODUCT){
+        assert(actualResult == 0);
+    }else{
+        assert(actualResult == 1);
+    }
+    printf("PASSED TEST 5 ::testProductionDone\n\n");
+}
+
+void testConsumptionDone(THREAD_DATA * ThreadPtr, int actualResult){
+    assert(ThreadPtr->BufferPtr != NULL);
+    assert(ThreadPtr->BufferPtr->ConsumerCount >=0);
+
+    if(ThreadPtr->BufferPtr->ConsumerCount < MAX_NUM_OF_PRODUCT){
+        assert(actualResult == 0);
+    }else{
+        assert(actualResult == 1);
+    }
+    printf("PASSED TEST 6 ::testConsumptionDone\n\n");
 }

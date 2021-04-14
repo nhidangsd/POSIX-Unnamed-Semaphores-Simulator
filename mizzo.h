@@ -8,6 +8,9 @@
 #define EXT_SEMAPHORE	10
 #define EXT_THREAD	15
 
+#define MAX_NUM_OF_PRODUCT 100
+#define CONVEYER_BELT_MAX 10
+
 
 /*
 * Success and error codes.
@@ -43,6 +46,8 @@ typedef struct{
 typedef struct{
     int ConsumerCount;
     int ProducerCount;
+    int ConveyerBelt[CONVEYER_BELT_MAX];
+    int *In, *Out;
     int OnBelt[ProductTypeN];
     int Consumed[ConsumerTypeN];
 } BUFFER_DATA;
