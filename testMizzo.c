@@ -20,8 +20,9 @@ void testInitBufferData(BUFFER_DATA* bufferPtr){
         assert(bufferPtr->ConveyerBelt[i] == 0);
     }
 
-    assert(bufferPtr->In == NULL);
-    assert(bufferPtr->Out == NULL);
+    assert(bufferPtr->In == 0);
+    assert(bufferPtr->Out == 0);
+
     for(i=0; i<ProductTypeN; i++){
         assert(bufferPtr->OnBelt[i] == 0);
     }
@@ -65,6 +66,7 @@ void testProductionDone(THREAD_DATA * ThreadPtr, int actualResult){
 }
 
 void testConsumptionDone(THREAD_DATA * ThreadPtr, int actualResult){
+
     assert(ThreadPtr->BufferPtr != NULL);
     assert(ThreadPtr->BufferPtr->ConsumerCount >=0);
 
@@ -75,3 +77,23 @@ void testConsumptionDone(THREAD_DATA * ThreadPtr, int actualResult){
     }
     printf("PASSED TEST 6 ::testConsumptionDone\n\n");
 }
+
+void testUpdateIn(THREAD_DATA * ThreadPtr, int actualRes){
+
+    assert(ThreadPtr != NULL);
+    assert(ThreadPtr->BufferPtr != NULL);
+    assert(actualRes == 95);
+
+    printf("PASSED TEST 7 ::testUpdateIn\n\n");
+}
+
+void testUpdateOut(THREAD_DATA * ThreadPtr, int actualRes){
+
+    assert(ThreadPtr != NULL);
+    assert(ThreadPtr->BufferPtr != NULL);
+    assert(actualRes == 95);
+    
+    printf("PASSED TEST 8 ::testUpdateOut\n\n");
+}
+
+

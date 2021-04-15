@@ -61,7 +61,8 @@ void runSimulation(OPTION_ARGS flags){
     THREAD_DATA LucyData, EthelData, CfbData, EesData;  /* thread data */
     SEM_DATA    SemData;                                /* critical region semaphore */
     void		*ThreadResultPtr;
-    BUFFER_DATA BufferData = {0, 0, {0}, NULL, NULL, {0},{0}};
+    BUFFER_DATA BufferData = {0, 0, {0}, 0, 0, 0, {0},{0}};
+
     testInitBufferData(&BufferData);
 
     initSemData(&SemData);

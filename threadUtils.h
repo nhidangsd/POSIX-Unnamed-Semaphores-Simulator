@@ -6,7 +6,7 @@ void initSemData(SEM_DATA* semData);
 void initSem(sem_t* sem, int initalVal);
 void initThreadData(THREAD_DATA* threadData, OPERATION operation, 
                     char* name, int n, SEM_DATA* semData, BUFFER_DATA* buffer);
-
+// void initBufferData(BUFFER_DATA* buffer);
 
 void* operate(void* VoidPtr);
 
@@ -18,9 +18,9 @@ void* produce(void* VoidPtr);
 // remove it from buffer
 void* consume(void* VoidPtr);
 
-void updateIn(THREAD_DATA * ThreadPtr);
+int updateIn(THREAD_DATA * ThreadPtr);
 
-void updateOut(THREAD_DATA * ThreadPtr);
+int updateOut(THREAD_DATA * ThreadPtr);
 
 int productionDone(THREAD_DATA * ThreadPtr);
 

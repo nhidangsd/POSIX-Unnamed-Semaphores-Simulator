@@ -47,7 +47,7 @@ typedef struct{
     int ConsumerCount;
     int ProducerCount;
     int ConveyerBelt[CONVEYER_BELT_MAX];
-    int *In, *Out;
+    int In, Out, BeltCounter;
     int OnBelt[ProductTypeN];
     int Consumed[ConsumerTypeN];
 } BUFFER_DATA;
