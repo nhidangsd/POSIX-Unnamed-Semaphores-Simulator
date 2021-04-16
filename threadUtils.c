@@ -27,19 +27,18 @@ void createSemaphore(sem_t* sem, int initalVal){
   }
 };
 
-// void initBufferData(BUFFER_DATA* bufferPtr){
-//   bufferPtr->ConsumerCount = bufferPtr->ProducerCount = 0;
-//   bufferPtr->ConveyerBelt = {0};
-//   bufferPtr->In = bufferPtr->Out = &(bufferPtr->ConveyerBelt);
-// }
-
-void printConveyerBelt(int ConveyerBelt[], int in, int out){
+void initShareData(SHARE_DATA* sharePtr){
+  sharePtr->ConsumerCount = sharePtr->ProducerCount = sharePtr->In = sharePtr->Out = 0;
   int i;
-  printf("ConveyerBelt = [ ");
   for(i=0; i<CONVEYER_BELT_MAX; i++){
-    printf("%d, ", ConveyerBelt[i]);
+    sharePtr->ConveyerBelt[i] = 0;
   }
-  printf(" ]\t In=%d\t Out=%d\n\n", in, out);
+  for(i=0; i<ProductTypeN; i++){
+    sharePtr->OnBelt[i] = 0;
+  }
+  for(i=0; i<ProductTypeN; i++){
+    sharePtr->Produced[i] = 0;
+  }
 }
 
 
@@ -66,18 +65,21 @@ void initConsumerData(CONSUMER_DATA* threadPtr, ConsumerType name, int n, SEM_DA
 
 
 void* produce(void* VoidPtr){
-  
+
   /* Typecast into a pointer of the expected type. */
   PRODUCER_DATA	*ThreadPtr = (PRODUCER_DATA *) VoidPtr;
   SEM_DATA* SemPtr = ThreadPtr->SemPtr;
   SHARE_DATA* ShareData = ThreadPtr->SharePtr;
 
   while (!productionDone(ThreadPtr)){
-
+    // testProductionDone(ThreadPtr);
     /* Put this thread to sleep for N milliseconds 
     * to simulate the amount of time to produce a product
     */ 
     msleep(ThreadPtr->N);
+    if(productionDone(ThreadPtr)){
+      return NULL;
+    }
     
     /* Check if we over produce FrogBite */
     if (!hasTooManyCFB(ThreadPtr)){
@@ -88,7 +90,7 @@ void* produce(void* VoidPtr){
     
       /* Updates Conveyer Belt */
       ProductType producer = updateIn(ThreadPtr);
-      // testUpdateIn(ThreadPtr, product);
+      // testUpdateIn(ThreadPtr, producer);
 
       /* Show that an item has been added to the belt and 
        * print the current status of the candy factory production.
@@ -117,12 +119,14 @@ void* consume(void* VoidPtr){
   SHARE_DATA* ShareData = ThreadPtr->SharePtr;
 
   while (!consumptionDone(ThreadPtr)){
-
+    // testConsumptionDone(ThreadPtr);
     /* Put this thread to sleep for N milliseconds 
     * to simulate the amount of time to consume a product (put a candy in the box)
     */ 
     msleep(ThreadPtr->N);
-
+    if(consumptionDone(ThreadPtr)){
+      return NULL;
+    }
     /* Enter Critical Section */
     sem_wait(&(SemPtr->Full)); 
     sem_wait(&(SemPtr->Mutex));
@@ -194,15 +198,20 @@ ProductType updateOut(CONSUMER_DATA * ThreadPtr){
 int productionDone(PRODUCER_DATA * ThreadPtr){
   SHARE_DATA* shareData = ThreadPtr->SharePtr;
   
-  return (shareData->ProducerCount < MAX_NUM_OF_PRODUCT-1) ? 0 : 1;
+  return (shareData->ProducerCount < MAX_NUM_OF_PRODUCT) ? 0 : 1;
 }
+
 
 int consumptionDone(CONSUMER_DATA * ThreadPtr){
   SHARE_DATA* shareData = ThreadPtr->SharePtr;
 
-  return (shareData->ConsumerCount < MAX_NUM_OF_PRODUCT-1) ? 0 : 1;
+  return (shareData->ConsumerCount < MAX_NUM_OF_PRODUCT) ? 0 : 1;
 }
 
+/* hasTooManyCFB(PRODUCER_DATA* ThreadPtr)
+ * - Checks if we over produce FrogBite 
+ * @param ThreadPtr:  pointer to a producer thread
+ */
 int hasTooManyCFB(PRODUCER_DATA* ThreadPtr){
   int isFrogBiteProducer = (ThreadPtr->Name == FrogBite) ? 1 : 0;
   int FrogBiteCounter = ThreadPtr->SharePtr->OnBelt[FrogBite];
@@ -211,7 +220,10 @@ int hasTooManyCFB(PRODUCER_DATA* ThreadPtr){
 }
 
 
-/* msleep(): Sleep for the requested number of milliseconds. */
+/* msleep(long msec)
+ * Sleeps for the requested number of milliseconds. 
+ * @param msec: the amount of time to sleep in milliseconds.
+ */
 int msleep(long msec)
 {
     struct timespec ts;

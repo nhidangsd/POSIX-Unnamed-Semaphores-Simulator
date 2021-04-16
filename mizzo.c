@@ -57,29 +57,33 @@ void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
 void runSimulation(OPTION_ARGS* flags){
     // testProcessArgs(flags);
 
-    SEM_DATA    SemData;                                /* critical region semaphore */
+    /* Critical region semaphores */
+    SEM_DATA    SemData;                               
     initSemData(&SemData);
     // testInitSemData(SemData);
 
-    SHARE_DATA ShareData = {0, 0, 0, 0, {0}, {0}, {0}};
+    /* Declare & Initialize Share Data to use between all threads */
+    SHARE_DATA ShareData;
+    initShareData(&ShareData);
     // testInitShareData(&ShareData);
 
-    void		*ThreadResultPtr;
-    
+    /* Declare & Initialize Data for Producer Threads */
     PRODUCER_DATA CfbData, EesData; 
     initProducerData(&CfbData, FrogBite, flags->f, &SemData, &ShareData);
     initProducerData(&EesData, Escargot, flags->e, &SemData, &ShareData);
-    // testNewProducerData(&CfbData);
+    // testInitProducerData(&CfbData);
 
+    /* Declare & Initialize Data for Consumer Threads */
     CONSUMER_DATA LucyData, EthelData;
     initConsumerData(&LucyData, Lucy, flags->L, &SemData, &ShareData);
     initConsumerData(&EthelData, Ethel, flags->E, &SemData, &ShareData);
-    // testNewConsumerData(&LucyData);
+    // testInitConsumerData(&LucyData);
 
-   /*
-    *   Create children threads
-    */
-    pthread_t   LucyThread, EthelThread, CfbThread, EesThread;                  /* thread declarations */
+
+    /* Create all Children Threads */
+    pthread_t   LucyThread, EthelThread, CfbThread, EesThread;    
+    void *ThreadResultPtr;  // Pointer containing the Thread result
+
     if (pthread_create(&CfbThread, NULL, produce, &CfbData)) {
         fprintf(stderr, "Unable to create Cfb thread\n");
         exit(EXT_THREAD);
@@ -116,21 +120,25 @@ void runSimulation(OPTION_ARGS* flags){
         exit(EXT_THREAD);
     }
 
-
     if (pthread_join(LucyThread, &ThreadResultPtr))  {
         fprintf(stderr, "Thread join error\n");
         exit(EXT_THREAD);
     }
 
+    if(consumptionDone(&LucyData)){
 
-    if (pthread_join(EthelThread, &ThreadResultPtr)) {
-        fprintf(stderr, "Thread join error\n");
-        exit(EXT_THREAD);
+        if (pthread_join(EthelThread, &ThreadResultPtr)) {
+            fprintf(stderr, "Thread join error\n");
+            exit(EXT_THREAD);
+        }
     }
-    int* consumed[ConsumerTypeN];
-    consumed[Lucy] = (LucyData.Consumed);
-    consumed[Ethel] = (EthelData.Consumed);
 
+    /* Create an array of pointers to consumed arrays for each consumer */
+    int* consumed[ConsumerTypeN];
+    consumed[Lucy] = LucyData.Consumed;
+    consumed[Ethel] = EthelData.Consumed;
+
+    /* Show how many candies of each type produced.  Show how many candies consumed by each consumer. */
     io_production_report(ShareData.Produced, consumed);
     
 }

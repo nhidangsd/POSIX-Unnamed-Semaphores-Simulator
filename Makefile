@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS=-c -Wall
+CFLAGS=-c -Wall -g
 
 all: mizzo
 

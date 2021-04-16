@@ -9,7 +9,7 @@ void testProcessArgs(OPTION_ARGS* flags){
     assert(flags->L == 50);
     assert(flags->E == 50);
     assert(!(flags->L == 0));
-    printf("PASSED TEST 1 ::testProcessArgs\n\n");
+    // printf("PASSED TEST ::testProcessArgs\n\n");
 };
 
 void testInitShareData(SHARE_DATA* sharePtr){
@@ -28,7 +28,7 @@ void testInitShareData(SHARE_DATA* sharePtr){
     for(i=0; i<ProductTypeN; i++){
         assert(sharePtr->Produced[i] == 0);
     }
-    printf("PASSED TEST 2 ::testInitShareData\n\n");
+    // printf("PASSED TEST ::testInitShareData\n\n");
 };
 
 void testInitSemData(SEM_DATA semData){
@@ -39,71 +39,52 @@ void testInitSemData(SEM_DATA semData){
     assert(val == 10);
     sem_getvalue(&(semData.Full), &val);
     assert(val == 0);
-    printf("PASSED TEST 3 ::testInitSemData\n\n");
+    // printf("PASSED TEST ::testInitSemData\n\n");
 };
 
-// void testInitThreadData(THREAD_DATA data){
-//     assert(data.Operation == CONSUME);
-//     assert(data.Name == 0);
-//     assert(data.N == 20);
-//     assert(data.Counter == 0);
-//     assert(data.SemPtr != NULL);
-//     assert(data.BufferPtr != NULL);
-//     printf("PASSED TEST 4 ::testInitThreadData\n\n");
-// }
 
-// void testProductionDone(THREAD_DATA * ThreadPtr, int actualResult){
-//     assert(ThreadPtr->BufferPtr != NULL);
-//     assert(ThreadPtr->BufferPtr->ProducerCount >=0);
+void testProductionDone(PRODUCER_DATA * ThreadPtr){
+    assert(ThreadPtr->SharePtr != NULL);
+    assert(ThreadPtr->SharePtr->ProducerCount >=0);
+    assert(ThreadPtr->SharePtr->ProducerCount <= MAX_NUM_OF_PRODUCT);
+    // printf("PASSED TEST ::testProductionDone\n\n");
+}
 
-//     if(ThreadPtr->BufferPtr->ProducerCount < MAX_NUM_OF_PRODUCT){
-//         assert(actualResult == 0);
-//     }else{
-//         assert(actualResult == 1);
-//     }
-//     printf("PASSED TEST 5 ::testProductionDone\n\n");
-// }
+void testConsumptionDone(CONSUMER_DATA * ThreadPtr){
 
-// void testConsumptionDone(THREAD_DATA * ThreadPtr, int actualResult){
+    assert(ThreadPtr->SharePtr != NULL);
+    assert(ThreadPtr->SharePtr->ConsumerCount >=0);
 
-//     assert(ThreadPtr->BufferPtr != NULL);
-//     assert(ThreadPtr->BufferPtr->ConsumerCount >=0);
+    assert(ThreadPtr->SharePtr->ConsumerCount <= MAX_NUM_OF_PRODUCT);
+    // printf("PASSED TEST ::testConsumptionDone\n\n");
+}
 
-//     if(ThreadPtr->BufferPtr->ConsumerCount < MAX_NUM_OF_PRODUCT){
-//         assert(actualResult == 0);
-//     }else{
-//         assert(actualResult == 1);
-//     }
-//     printf("PASSED TEST 6 ::testConsumptionDone\n\n");
-// }
+void testUpdateIn(PRODUCER_DATA * ThreadPtr, ProductType actualRes){
 
-// void testUpdateIn(THREAD_DATA * ThreadPtr, int actualRes){
+    assert(ThreadPtr != NULL);
+    assert(ThreadPtr->SharePtr != NULL);
+    assert(actualRes == FrogBite || actualRes == Escargot);
 
-//     assert(ThreadPtr != NULL);
-//     assert(ThreadPtr->BufferPtr != NULL);
-//     assert(actualRes == 95);
+    // printf("PASSED TEST ::testUpdateIn\n\n");
+}
 
-//     printf("PASSED TEST 7 ::testUpdateIn\n\n");
-// }
+void testUpdateOut(CONSUMER_DATA* ThreadPtr, ProductType actualRes){
 
-// void testUpdateOut(THREAD_DATA * ThreadPtr, int actualRes){
+    assert(ThreadPtr != NULL);
+    assert(ThreadPtr->SharePtr != NULL);
+    assert(actualRes == FrogBite || actualRes == Escargot);
+    // printf("PASSED TEST ::testUpdateOut\n\n");
+}
 
-//     assert(ThreadPtr != NULL);
-//     assert(ThreadPtr->BufferPtr != NULL);
-//     assert(actualRes == 95);
-    
-//     printf("PASSED TEST 8 ::testUpdateOut\n\n");
-// }
-
-void testNewProducerData(PRODUCER_DATA* threadPtr){
+void testInitProducerData(PRODUCER_DATA* threadPtr){
     assert(threadPtr->Name == FrogBite);
     assert(threadPtr->N == 1);
     assert(threadPtr->SemPtr != NULL);
     assert(threadPtr->SharePtr != NULL);
-    printf("PASSED TEST 9 ::testNewProducerData\n\n");
+    // printf("PASSED TEST ::testNewProducerData\n\n");
 }
 
-void testNewConsumerData(CONSUMER_DATA* threadPtr){
+void testInitConsumerData(CONSUMER_DATA* threadPtr){
     assert(threadPtr->Name == Lucy);
     assert(threadPtr->N == 50);
     assert(threadPtr->SemPtr != NULL);
@@ -113,5 +94,14 @@ void testNewConsumerData(CONSUMER_DATA* threadPtr){
     for(i=0; i<ProductTypeN; i++){
         assert(threadPtr->Consumed[i] == 0);
     }
-    printf("PASSED TEST 10 ::testNewConsumerData\n\n");
+    // printf("PASSED TEST ::testNewConsumerData\n\n");
+}
+
+void printConveyerBelt(int ConveyerBelt[], int in, int out){
+  int i;
+  printf("ConveyerBelt = [ ");
+  for(i=0; i<CONVEYER_BELT_MAX; i++){
+    printf("%d, ", ConveyerBelt[i]);
+  }
+  printf(" ]\t In=%d\t Out=%d\n\n", in, out);
 }

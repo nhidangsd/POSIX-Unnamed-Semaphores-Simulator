@@ -5,11 +5,11 @@
 void testProcessArgs(OPTION_ARGS* flags);
 void testInitShareData(SHARE_DATA* sharePtr);
 void testInitSemData(SEM_DATA semData);
-// void testInitThreadData(THREAD_DATA data);
-// void testProductionDone(THREAD_DATA * ThreadPtr, int actualResult);
-// void testConsumptionDone(THREAD_DATA * ThreadPtr, int actualResult);
-// void testUpdateIn(THREAD_DATA * ThreadPtr, int actualRes);
-// void testUpdateOut(THREAD_DATA * ThreadPtr, int actualRes);
-void testNewProducerData(PRODUCER_DATA* threadPtr);
-void testNewConsumerData(CONSUMER_DATA* threadPtr);
+void testProductionDone(PRODUCER_DATA * ThreadPtr);
+void testConsumptionDone(CONSUMER_DATA * ThreadPtr);
+void testUpdateIn(PRODUCER_DATA * ThreadPtr, ProductType actualRes);
+void testUpdateOut(CONSUMER_DATA* ThreadPtr, ProductType actualRes);
+void testInitProducerData(PRODUCER_DATA* threadPtr);
+void testInitConsumerData(CONSUMER_DATA* threadPtr);
+void printConveyerBelt(int OnBelt[], int in, int out);
 #endif // TESTMIZZO_H
