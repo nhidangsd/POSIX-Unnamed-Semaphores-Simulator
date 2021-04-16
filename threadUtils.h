@@ -3,12 +3,12 @@
 #include "mizzo.h"
 
 void initSemData(SEM_DATA* semData);
-void initSem(sem_t* sem, int initalVal);
-void initThreadData(THREAD_DATA* threadData, OPERATION operation, 
-                    char* name, int n, SEM_DATA* semData, BUFFER_DATA* buffer);
+void createSemaphore(sem_t* sem, int initalVal);
+void printConveyerBelt(int OnBelt[], int in, int out);
+void initProducerData(PRODUCER_DATA* threadPtr, ProductType name, int n, SEM_DATA* semPtr, SHARE_DATA* sharePtr);
+void initConsumerData(CONSUMER_DATA* threadPtr, ConsumerType name, int n, SEM_DATA* semPtr, SHARE_DATA* sharePtr);
 // void initBufferData(BUFFER_DATA* buffer);
 
-void* operate(void* VoidPtr);
 
 // Function to produce an item and
 // add it to the buffer
@@ -18,12 +18,17 @@ void* produce(void* VoidPtr);
 // remove it from buffer
 void* consume(void* VoidPtr);
 
-int updateIn(THREAD_DATA * ThreadPtr);
+ProductType updateIn(PRODUCER_DATA * ThreadPtr);
 
-int updateOut(THREAD_DATA * ThreadPtr);
+ProductType updateOut(CONSUMER_DATA * ThreadPtr);
 
-int productionDone(THREAD_DATA * ThreadPtr);
+int productionDone(PRODUCER_DATA * ThreadPtr);
 
-int consumptionDone(THREAD_DATA * ThreadPtr);
+int consumptionDone(CONSUMER_DATA * ThreadPtr);
+
+int hasTooManyCFB(PRODUCER_DATA* ThreadPtr);
+
+int msleep(long tms);
+
 
 #endif // TTHREAD_UTILS_H

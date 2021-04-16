@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>          /* stdout */
-#include <unistd.h>
+#include <errno.h>
+#include <time.h>
 #include <pthread.h>    /* pthread_exit() */
 #include "threadUtils.h"
 #include "production.h"
@@ -8,12 +9,12 @@
 #include "testMizzo.h"
 
 void initSemData(SEM_DATA* semData){
-  initSem(&(semData->MutexPtr), 1);
-  initSem(&(semData->EmptyPtr), 10);
-  initSem(&(semData->FullPtr), 0);
+  createSemaphore(&(semData->Mutex), 1);
+  createSemaphore(&(semData->Empty), 10);
+  createSemaphore(&(semData->Full), 0);
 };
 
-void initSem(sem_t* sem, int initalVal){
+void createSemaphore(sem_t* sem, int initalVal){
 
    /* Create the semaphore --------------------
     * arg 1 - semaphore handle
@@ -32,203 +33,202 @@ void initSem(sem_t* sem, int initalVal){
 //   bufferPtr->In = bufferPtr->Out = &(bufferPtr->ConveyerBelt);
 // }
 
-void initThreadData(THREAD_DATA* threadData, OPERATION operation, 
-                    char* name, int n, SEM_DATA* semData, BUFFER_DATA* buffer){
-    threadData->Operation = operation;
-    threadData->Name = name;
-    threadData->N = n;
-    threadData->Counter = 0;
-    threadData->SemPtr = semData;
-    threadData->BufferPtr = buffer;
-};
-
-
-void* operate(void* VoidPtr){
-
-  /* Typecast into a pointer of the expected type. */
-  THREAD_DATA	*ThreadData = (THREAD_DATA *) VoidPtr;
-  SEM_DATA* SemData = ThreadData->SemPtr;
-  printf("%s calls function operate()\n", ThreadData->Name);
-
-  /* Enter Critical Section */
-  sem_wait(&(SemData->MutexPtr));
-
-  
-  /* Update the share data after being modified by the this thread */
-  switch(ThreadData->Operation){
-
-    case PRODUCE:
-      produce(ThreadData);
-      break;
-
-    case CONSUME:
-      consume(ThreadData);
-      break;
-
-    default:
-      /* Bad input, return without any operations */
-      return NULL;
+void printConveyerBelt(int ConveyerBelt[], int in, int out){
+  int i;
+  printf("ConveyerBelt = [ ");
+  for(i=0; i<CONVEYER_BELT_MAX; i++){
+    printf("%d, ", ConveyerBelt[i]);
   }
-      
-  /* Clear output stream */
-  fflush(stdout);
+  printf(" ]\t In=%d\t Out=%d\n\n", in, out);
+}
 
-  /* Exit Critical Section */
-  sem_post(&(SemData->MutexPtr));
-    
-  return NULL;
-    
+
+void initProducerData(PRODUCER_DATA* threadPtr, ProductType name, int n, SEM_DATA* semPtr, SHARE_DATA* sharePtr){
+
+    threadPtr->Name = name;
+    threadPtr->N = n;
+    threadPtr->SemPtr = semPtr;
+    threadPtr->SharePtr = sharePtr;
 };
+
+void initConsumerData(CONSUMER_DATA* threadPtr, ConsumerType name, int n, SEM_DATA* semPtr, SHARE_DATA* sharePtr){
+
+    threadPtr->Name = name;
+    threadPtr->N = n;
+
+    int i = 0;
+    for(i=0; i<ProductTypeN; i++){
+      threadPtr->Consumed[i] = 0;
+    }
+    threadPtr->SemPtr = semPtr;
+    threadPtr->SharePtr = sharePtr;
+};
+
 
 void* produce(void* VoidPtr){
   
   /* Typecast into a pointer of the expected type. */
-  THREAD_DATA	*ThreadPtr = (THREAD_DATA *) VoidPtr;
+  PRODUCER_DATA	*ThreadPtr = (PRODUCER_DATA *) VoidPtr;
   SEM_DATA* SemPtr = ThreadPtr->SemPtr;
-  BUFFER_DATA* BufferPtr = ThreadPtr->BufferPtr;
+  SHARE_DATA* ShareData = ThreadPtr->SharePtr;
 
-  while (1){
-    sem_wait(&(SemPtr->EmptyPtr));
-
-    /* Enter Critical Section */
-    sem_wait(&(SemPtr->MutexPtr));
+  while (!productionDone(ThreadPtr)){
 
     /* Put this thread to sleep for N milliseconds 
     * to simulate the amount of time to produce a product
-    */
-    printf("%s is producing\n", ThreadPtr->Name);
-    // sleep(ThreadPtr->N);
-
-
-    /* Add product onto the Conveyer Belt */
-    int product = updateIn(ThreadPtr);
-    testUpdateIn(ThreadPtr, product);
+    */ 
+    msleep(ThreadPtr->N);
     
-    /* Exit Critical Section */
-    sem_post(&(SemPtr->MutexPtr));
-    sem_post(&(SemPtr->FullPtr));
+    /* Check if we over produce FrogBite */
+    if (!hasTooManyCFB(ThreadPtr)){
 
-    testProductionDone(ThreadPtr, productionDone(ThreadPtr));
-    if(productionDone(ThreadPtr) ){
-      printf("Exiting: producer\n");
-      return NULL;
+      /* Enters Critical Section */
+      sem_wait(&(SemPtr->Empty));
+      sem_wait(&(SemPtr->Mutex));
+    
+      /* Updates Conveyer Belt */
+      ProductType producer = updateIn(ThreadPtr);
+      // testUpdateIn(ThreadPtr, product);
+
+      /* Show that an item has been added to the belt and 
+       * print the current status of the candy factory production.
+       */
+      io_add_type(producer, ShareData->OnBelt, ShareData->Produced);
+
+      /* Clear output stream */
+      fflush(stdout);
+
+      /* Exit Critical Section */
+      sem_post(&(SemPtr->Mutex));
+      sem_post(&(SemPtr->Full));
+      
     }
-  }
 
-  // return NULL;
-  
+  }
+  return NULL;
 };
+
 
 void* consume(void* VoidPtr){
 
   /* Typecast into a pointer of the expected type. */
-  THREAD_DATA	*ThreadPtr = (THREAD_DATA *) VoidPtr;
+  CONSUMER_DATA	*ThreadPtr = (CONSUMER_DATA *) VoidPtr;
   SEM_DATA* SemPtr = ThreadPtr->SemPtr;
-  BUFFER_DATA* BufferPtr = ThreadPtr->BufferPtr;
+  SHARE_DATA* ShareData = ThreadPtr->SharePtr;
 
-  while (1){
-    sem_wait(&(SemPtr->FullPtr)); 
-
-    /* Enter Critical Section */
-    sem_wait(&(SemPtr->MutexPtr));
+  while (!consumptionDone(ThreadPtr)){
 
     /* Put this thread to sleep for N milliseconds 
     * to simulate the amount of time to consume a product (put a candy in the box)
     */ 
-    printf("%s is consuming\n", ThreadPtr->Name);  
-    // sleep(ThreadPtr->N);
-    
-    /* Remove product out of the Conveyer Belt */
-    int product = updateOut(ThreadPtr); 
-    testUpdateOut(ThreadPtr, product); 
+    msleep(ThreadPtr->N);
 
-    // Print 
-    int consumer = 0;
-    // io_remove_type(consumer, product,)
-    
+    /* Enter Critical Section */
+    sem_wait(&(SemPtr->Full)); 
+    sem_wait(&(SemPtr->Mutex));
+ 
+    /* Updates Conveyer Belt */
+    ProductType product = updateOut(ThreadPtr); 
+    // testUpdateOut(ThreadPtr, product); 
+
+    /* Show that an item has been removed from the belt and 
+     * print the current status of the candy factory production.
+    */
+    io_remove_type(ThreadPtr->Name, product, ShareData->OnBelt, ThreadPtr->Consumed);
+
+    /* Clear output stream */
+    fflush(stdout);
+
     /* Exit Critical Section */
-    sem_post(&(SemPtr->MutexPtr));
-    sem_post(&(SemPtr->EmptyPtr));
-
-    testConsumptionDone(ThreadPtr, consumptionDone(ThreadPtr));
-    if( consumptionDone(ThreadPtr) ){
-      printf("Exiting: consumer\n");
-      return NULL; 
-    }
+    sem_post(&(SemPtr->Mutex));
+    sem_post(&(SemPtr->Empty));
+    
   }
-
+  return NULL;
 };
 
-int updateIn(THREAD_DATA * ThreadPtr){
-  BUFFER_DATA* BufferPtr = ThreadPtr->BufferPtr;
+ProductType updateIn(PRODUCER_DATA * ThreadPtr){
+  SHARE_DATA* ShareData = ThreadPtr->SharePtr;
 
-  // check if Conveyer Belt is full;
+  /* Saves the product type that this thread is about to produce */
+  ProductType product = ThreadPtr->Name;
 
-  if(BufferPtr->BeltCounter >= CONVEYER_BELT_MAX){
-    printf("Conveyer Belt is full\n");
-    return -1;
-  }
+  /* Puts the product on the Conveyer Belt & Moves pointer In 1 cell to the right */
+  ShareData->ConveyerBelt[ShareData->In] = product;
+  ShareData->In = ((ShareData->In +1 ) % CONVEYER_BELT_MAX);
 
-  // add new item on Conveyer Belt
-  int product = 95;
+  /* Increments the Num of products have been produced */
+  ShareData->ProducerCount++;
 
-  BufferPtr->ConveyerBelt[BufferPtr->In] = product;
-  (BufferPtr->BeltCounter)++;
+  /* Increments the num of products that this thread has been produced */
+  ShareData->Produced[product]++; 
   
-
-
-  BufferPtr->In = (BufferPtr->In) % 10;
-
-  /* Update the Num of times this thread has performed action */
-  ThreadPtr->Counter++;
-
-  /* Update ProducerCount*/
-  BufferPtr->ProducerCount++;
-  printf("%s updates ProducerCount to %d \n", ThreadPtr->Name, BufferPtr->ProducerCount);
+  /* Increments product's quantity on the Conveyer Belt after Production */
+  ShareData->OnBelt[product]++;
 
   return product;
 }
 
-int updateOut(THREAD_DATA * ThreadPtr){
-  BUFFER_DATA* BufferPtr = ThreadPtr->BufferPtr;
+ProductType updateOut(CONSUMER_DATA * ThreadPtr){
+  SHARE_DATA* ShareData = ThreadPtr->SharePtr;
 
-  // check if Conveyer Belt is full;
+  /* Saves the product type that this thread is about to consume */
+  ProductType product = ShareData->ConveyerBelt[ShareData->Out];
 
-  if(BufferPtr->BeltCounter <= 0){
-    printf("Conveyer Belt is empty\n");
-    return -1;
-  }
+  /* Moves pointer Out 1 cell to the right after consuming that product */
+  ShareData->Out = ((ShareData->Out +1 ) % CONVEYER_BELT_MAX);
 
-  // remove item on Conveyer Belt
+  /* Incremnets the Num of Products that have been consumed */
+  ShareData->ConsumerCount++;
 
-  int product = BufferPtr->ConveyerBelt[BufferPtr->Out];
-  (BufferPtr->BeltCounter)--;
+  /* Incremnets the num of products of this Product type that this thread has been consumed */
+  ThreadPtr->Consumed[product]++; 
 
-
-  BufferPtr->Out = (BufferPtr->Out) % 10;
-
-
-  /* Update the Num of times this thread has performed action */
-  ThreadPtr->Counter++;
-    
-  /* Update the Consumer Count */
-  BufferPtr->ConsumerCount++;
-  printf("%s updates ConsumerCount to %d \n", ThreadPtr->Name, BufferPtr->ConsumerCount); 
+  /* Decrements product's quantity of this Product Type on the Conveyer Belt after Consumption */
+  ShareData->OnBelt[product]--;
 
   return product;
 }
-int productionDone(THREAD_DATA * ThreadPtr){
-  BUFFER_DATA* bufferPtr = ThreadPtr->BufferPtr;
-  printf("%s checks if productionDOne: res = %d \n", ThreadPtr-> Name, (bufferPtr->ProducerCount < MAX_NUM_OF_PRODUCT) ? 0 : 1);
-  return (bufferPtr->ProducerCount < MAX_NUM_OF_PRODUCT) ? 0 : 1;
+
+
+int productionDone(PRODUCER_DATA * ThreadPtr){
+  SHARE_DATA* shareData = ThreadPtr->SharePtr;
+  
+  return (shareData->ProducerCount < MAX_NUM_OF_PRODUCT-1) ? 0 : 1;
 }
 
-int consumptionDone(THREAD_DATA * ThreadPtr){
-  BUFFER_DATA* bufferPtr = ThreadPtr->BufferPtr;
-  printf("%s checks if consumptionDone: res = %d \n", ThreadPtr->Name , (bufferPtr->ConsumerCount < MAX_NUM_OF_PRODUCT) ? 0 : 1);
-  return (bufferPtr->ConsumerCount < MAX_NUM_OF_PRODUCT) ? 0 : 1;
+int consumptionDone(CONSUMER_DATA * ThreadPtr){
+  SHARE_DATA* shareData = ThreadPtr->SharePtr;
+
+  return (shareData->ConsumerCount < MAX_NUM_OF_PRODUCT-1) ? 0 : 1;
+}
+
+int hasTooManyCFB(PRODUCER_DATA* ThreadPtr){
+  int isFrogBiteProducer = (ThreadPtr->Name == FrogBite) ? 1 : 0;
+  int FrogBiteCounter = ThreadPtr->SharePtr->OnBelt[FrogBite];
+
+  return (FrogBiteCounter >= MAX_FROGBITE_ON_CONVEYER_BELT && isFrogBiteProducer) ? 1 : 0;
 }
 
 
+/* msleep(): Sleep for the requested number of milliseconds. */
+int msleep(long msec)
+{
+    struct timespec ts;
+    int res;
 
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
 
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
+}

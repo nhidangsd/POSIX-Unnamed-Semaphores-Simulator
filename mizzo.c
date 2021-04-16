@@ -5,102 +5,100 @@
 #include "mizzo.h"
 #include "threadUtils.h"
 #include "testMizzo.h"
+#include "io.h"
 
+
+/* processArgs(int argc, char* argv[], OPTION_ARGS* flags)
+ * - Scans input arguments and setup the flags for later usage
+ * @param argc :    An integer containing the number of entries in argv: 0 to agrc-1
+ * @param argv :    Contains pointers t the strings. Note that the program name is argv[0]
+ * @param flags:    A struct containing data associated with each Option arguments
+ */
 void processArgs(int argc, char* argv[], OPTION_ARGS* flags){
     int Option;
-    // only take -E, -L, -f, -e as option args
-    // ':' expects a value after that option arg
+
+    /* only take -E, -L, -f, -e as option args
+     *':' expects a value after that option arg
+     */
     char const *optionStr = "E:L:f:e:";
 
     while( (Option = getopt(argc, argv, optionStr)) != -1){
 
-        /* If the option has an argument, optarg is set to point to the
+        /* 
+         * If the option has an argument, optarg is set to point to the
          * argument associated with the option.
+         * In our case, optarg will be the number of milliseconds N 
+         * that a specified thread requires to perform its task.
          */
         switch(Option){
             case 'E':
-                flags->E = atoi(optarg);
+                flags->E = atol(optarg);
                 break;
             case 'L':
-                flags->L = atoi(optarg);
+                flags->L = atol(optarg);
                 break;
             case 'f':
-                flags->f = atoi(optarg);
+                flags->f = atol(optarg);
                 break;
             case 'e':
-                flags->e = atoi(optarg);   
+                flags->e = atol(optarg);   
                 break;
             default:
                 exit(badflag);
         }   
     }
-
-   /*
-    * Once the getopt loop is done, the external variable optind contains
-    * a number. This is the first argument of argv to process
-    * after all options have been processed.
-    * argv[optind] is the next mandatory argument.
-    */
-
-    int idx = optind;
-
-    /* If idx < argc, there are mandatory arguments to process */
-    if (idx < argc) {
-    /* Process positional arguments:
-     *argv[idx] argv[idx+1], ..., argv[argc-1]
-     */
-        printf("argv[idx] = %s\n", argv[idx]);
-    }
 }
 
 
-void runSimulation(OPTION_ARGS flags){
-    testProcessArgs(flags);
+/* runSimulation(OPTION_ARGS* flags)
+ * - Executes the Producer-Consumer Problem
+ * @param flags:    A struct containing data associated with each Option arguments
+ */
+void runSimulation(OPTION_ARGS* flags){
+    // testProcessArgs(flags);
 
-    pthread_t   Lucy, Ethel, Cfb, Ees;                  /* thread declarations */
-    THREAD_DATA LucyData, EthelData, CfbData, EesData;  /* thread data */
     SEM_DATA    SemData;                                /* critical region semaphore */
-    void		*ThreadResultPtr;
-    BUFFER_DATA BufferData = {0, 0, {0}, 0, 0, 0, {0},{0}};
-
-    testInitBufferData(&BufferData);
-
     initSemData(&SemData);
-    testInitSemData(SemData);
+    // testInitSemData(SemData);
 
-    /* Initialize data structures -------------------- */
+    SHARE_DATA ShareData = {0, 0, 0, 0, {0}, {0}, {0}};
+    // testInitShareData(&ShareData);
+
+    void		*ThreadResultPtr;
     
-    initThreadData(&CfbData, PRODUCE, "Cfb", flags.f, &SemData, &BufferData);
-    // initThreadData(&EesData, PRODUCE, "Ees", flags.e, &SemData, &BufferData);
+    PRODUCER_DATA CfbData, EesData; 
+    initProducerData(&CfbData, FrogBite, flags->f, &SemData, &ShareData);
+    initProducerData(&EesData, Escargot, flags->e, &SemData, &ShareData);
+    // testNewProducerData(&CfbData);
 
-    initThreadData(&LucyData, CONSUME, "Lucy", flags.L, &SemData, &BufferData);
-    // initThreadData(&EthelData, CONSUME, "Ethel", flags.E, &SemData, &BufferData);
-
-    
-    testInitThreadData(LucyData);
+    CONSUMER_DATA LucyData, EthelData;
+    initConsumerData(&LucyData, Lucy, flags->L, &SemData, &ShareData);
+    initConsumerData(&EthelData, Ethel, flags->E, &SemData, &ShareData);
+    // testNewConsumerData(&LucyData);
 
    /*
     *   Create children threads
     */
-    if (pthread_create(&Cfb, NULL, produce, &CfbData)) {
+    pthread_t   LucyThread, EthelThread, CfbThread, EesThread;                  /* thread declarations */
+    if (pthread_create(&CfbThread, NULL, produce, &CfbData)) {
         fprintf(stderr, "Unable to create Cfb thread\n");
         exit(EXT_THREAD);
     }
 
-    // if (pthread_create(&Ees, NULL, operate, &EesData)) {
-    //     fprintf(stderr, "Unable to create Ees thread\n");
-    //     exit(EXT_THREAD);
-    // }
+    if (pthread_create(&EesThread, NULL, produce, &EesData)) {
+        fprintf(stderr, "Unable to create Ees thread\n");
+        exit(EXT_THREAD);
+    }
 
-    if (pthread_create(&Lucy, NULL, consume, &LucyData)) {
+    if (pthread_create(&LucyThread, NULL, consume, &LucyData)) {
         fprintf(stderr, "Unable to create Lucy thread\n");
         exit(EXT_THREAD);
     }
 
-    // if (pthread_create(&Ethel, NULL, operate, &EthelData)) {
-    //     fprintf(stderr, "Unable to create Ethel thread\n");
-    //     exit(EXT_THREAD);
-    // }
+    if (pthread_create(&EthelThread, NULL, consume, &EthelData)) {
+        fprintf(stderr, "Unable to create Ethel thread\n");
+        exit(EXT_THREAD);
+    }
 
    /* wait for threads to exit --------------------
     * Note that these threads always return a NULL result pointer
@@ -108,29 +106,31 @@ void runSimulation(OPTION_ARGS flags){
     * could return something using the same mechanisms that we used 
     * to pass data in to the thread.
     */
-    if (pthread_join(Cfb, &ThreadResultPtr)) {
+    if (pthread_join(CfbThread, &ThreadResultPtr)) {
         fprintf(stderr, "Thread join error\n");
         exit(EXT_THREAD);
     }
   
-    // if (pthread_join(Ees, &ThreadResultPtr))  {
-    //     fprintf(stderr, "Thread join error\n");
-    //     exit(EXT_THREAD);
-    // }
-
-
-    if (pthread_join(Lucy, &ThreadResultPtr))  {
+    if (pthread_join(EesThread, &ThreadResultPtr))  {
         fprintf(stderr, "Thread join error\n");
         exit(EXT_THREAD);
     }
 
 
-    // if (pthread_join(Ethel, &ThreadResultPtr)) {
-    //     fprintf(stderr, "Thread join error\n");
-    //     exit(EXT_THREAD);
-    // }
+    if (pthread_join(LucyThread, &ThreadResultPtr))  {
+        fprintf(stderr, "Thread join error\n");
+        exit(EXT_THREAD);
+    }
 
 
-    printf("=======Back to Main thread\n");
+    if (pthread_join(EthelThread, &ThreadResultPtr)) {
+        fprintf(stderr, "Thread join error\n");
+        exit(EXT_THREAD);
+    }
+    int* consumed[ConsumerTypeN];
+    consumed[Lucy] = (LucyData.Consumed);
+    consumed[Ethel] = (EthelData.Consumed);
+
+    io_production_report(ShareData.Produced, consumed);
     
 }

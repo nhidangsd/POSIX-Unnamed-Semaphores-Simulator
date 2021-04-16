@@ -1,16 +1,20 @@
 #ifndef MIZZO_H
 #define MIZZO_H
 #include <semaphore.h>	/* POSIX semaphores prototypes & defns */
-#include "production.h"
+#include "production.h" /* ProductType and ConsumerType */
+
 /* program exit codes */
-#define EXT_NORMAL	 0
-#define EXT_USAGE	 5
 #define EXT_SEMAPHORE	10
 #define EXT_THREAD	15
 
+/* Maximum quantity of product that needs to be produced */
 #define MAX_NUM_OF_PRODUCT 100
+
+/* Maximum quantity of product that can be placed on the Conveyer Belt */
 #define CONVEYER_BELT_MAX 10
 
+/* Maximum quantity of Crunchy Frog Bite that can be placed on the Conveyer Belt */
+#define MAX_FROGBITE_ON_CONVEYER_BELT   3
 
 /*
 * Success and error codes.
@@ -27,45 +31,78 @@ typedef enum {
 } result;
 
 
+/* struct OPTION_ARGS 
+ * Contains data associated with each Option arguments 
+ */
 typedef struct{
     int E, L, f, e;
 } OPTION_ARGS;
 
-/* Type of operations threads can perform */
-typedef enum{
-    PRODUCE,
-    CONSUME,
-} OPERATION;
 
+/* struct SEM_DATA 
+ * Contains all semaphores data 
+ */
 typedef struct{
-    sem_t MutexPtr;     /* pointer to Critical section */
-    sem_t EmptyPtr;     /* pointer to Critical section */
-    sem_t FullPtr;     /* pointer to Critical section */
+    sem_t Mutex;    
+    sem_t Empty;   
+    sem_t Full;   
 } SEM_DATA;
 
+
+/* struct SHARE_DATA 
+ * Contains sharing data between all threads
+ */
 typedef struct{
     int ConsumerCount;
     int ProducerCount;
+
+    int In, Out;
+    /* Array containing products that are placed on the Conveyer Belt */
     int ConveyerBelt[CONVEYER_BELT_MAX];
-    int In, Out, BeltCounter;
-    int OnBelt[ProductTypeN];
-    int Consumed[ConsumerTypeN];
-} BUFFER_DATA;
+    /* Array of number of candies of each type that 
+     * are on the belt and have not yet been consumed 
+     */
+    int OnBelt[ProductTypeN]; 
+    int Produced[ProductTypeN];   /* Array of number of products of each type that have been produced */
+} SHARE_DATA;
+
+
+/* struct CONSUMER_DATA 
+ * Contains data for Consumer Thread
+ */
 typedef struct{
-    OPERATION Operation; /* Specify what should be done */
-    char* Name;          /* Name of this thread */
-    int N;               /* Number of milliseconds N needed to perform task  */
-    int Counter;         /* Number of times to perform action */
-    SEM_DATA* SemPtr;
-    BUFFER_DATA* BufferPtr;/* pointer to shared data */
-} THREAD_DATA;
+    ConsumerType Name;          /* Consumer type */
+    int N;                      /* Number of milliseconds N needed to perform task  */
+    int Consumed[ProductTypeN]; /* Array of number of products of each type that have been consumed.*/
+    SEM_DATA* SemPtr;           /* Pointer to all Semaphore data */
+    SHARE_DATA* SharePtr;       /* Pointer to shared data */
+} CONSUMER_DATA;
 
 
-/* 
- * processArgs - Scans input arguments and setup the flags for later usage 
- * @param 
+/* struct PRODUCER_DATA 
+ * Contains data for Producer Thread
+ */
+typedef struct{
+    ProductType Name;           /* Product type */
+    int N;                      /* Number of milliseconds N needed to perform task  */
+    SEM_DATA* SemPtr;           /* Pointer to all Semaphore data */
+    SHARE_DATA* SharePtr;       /* Pointer to shared data */
+} PRODUCER_DATA;
+
+
+/* processArgs(int argc, char* argv[], OPTION_ARGS* flags)
+ * - Scans input arguments and setup the flags for later usage
+ * @param argc :    An integer containing the number of entries in argv: 0 to agrc-1
+ * @param argv :    Contains pointers t the strings. Note that the program name is argv[0]
+ * @param flags:    A struct containing data associated with each Option arguments
  */
 void processArgs(int argc, char* argv[], OPTION_ARGS* flags);
-void runSimulation(OPTION_ARGS flag);
+
+
+/* runSimulation(OPTION_ARGS* flags)
+ * - Executes the Producer-Consumer Problem
+ * @param flags:    A struct containing data associated with each Option arguments
+ */
+void runSimulation(OPTION_ARGS* flag);
 
 #endif // MIZZO_H
