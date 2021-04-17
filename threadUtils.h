@@ -1,6 +1,7 @@
 #ifndef THREAD_UTILS_H
 #define THREAD_UTILS_H
-#include "mizzo.h"
+
+#include "structure.h"
 
 /* createSemaphore(sem_t* sem, int initalVal)
  * - A helper function for initSemData(SEM_DATA* semData)

@@ -3,7 +3,6 @@
 #include <errno.h>
 #include <time.h>
 #include "threadUtils.h"
-#include "production.h"
 
 /* createSemaphore(sem_t* sem, int initalVal)
  * - A helper function for initSemData(SEM_DATA* semData)

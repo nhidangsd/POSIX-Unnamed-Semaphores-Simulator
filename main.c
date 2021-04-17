@@ -1,6 +1,4 @@
 #include "mizzo.h"
-#include "testMizzo.h"
-
 
 int main(int argc, char* argv[]){
 

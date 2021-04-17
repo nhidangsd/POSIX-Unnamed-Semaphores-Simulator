@@ -138,7 +138,6 @@ void runSimulation(OPTION_ARGS* flags){
 
     /* Show how many candies of each type produced.  Show how many candies consumed by each consumer. */
     io_production_report(ShareData.Produced, consumed);
-    
 }
 
 
